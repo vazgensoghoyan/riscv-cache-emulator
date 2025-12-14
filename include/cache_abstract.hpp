@@ -2,9 +2,10 @@
 #define CACHE_ABSTRACT_HPP
 
 #include <cstdint>
+#include <cstring>
 
-#include <ram.hpp>
-#include <config.hpp>
+#include "ram.hpp"
+#include "config.hpp"
 
 struct CacheStats {
     uint64_t instr_access = 0;
@@ -22,6 +23,8 @@ class CacheAbstract {
 public:
     explicit CacheAbstract(RAM& ram);
     virtual ~CacheAbstract() = default;
+
+    virtual void reset_policy() = 0;
 
     uint32_t read32(uint32_t addr, AccessType access_type);
     void write32(uint32_t addr, uint32_t value);

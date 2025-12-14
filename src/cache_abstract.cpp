@@ -15,6 +15,7 @@ static uint32_t get_tag(uint32_t addr) {
 
 CacheAbstract::CacheAbstract(RAM& ram) : ram_(ram) {
     std::memset(cache_, 0, sizeof(cache_));
+    reset_policy();
 }
 
 uint32_t CacheAbstract::read32(uint32_t addr, AccessType type) {
