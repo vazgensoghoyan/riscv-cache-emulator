@@ -33,7 +33,7 @@ void RAM::load_fragment(uint32_t addr, const std::vector<uint8_t>& data) {
     }
 }
 
-// reading from ram
+// reading and writing
 
 uint8_t RAM::read8(uint32_t addr) const {
     check_bounds(addr, 1);
@@ -41,59 +41,11 @@ uint8_t RAM::read8(uint32_t addr) const {
     return data_[addr];
 }
 
-uint16_t RAM::read16(uint32_t addr) const {
-    check_bounds(addr, 2);
-    check_defined(addr, 2);
-
-    return static_cast<uint16_t>(
-          data_[addr]
-        | (data_[addr + 1] << 8)
-    );
-}
-
-uint32_t RAM::read32(uint32_t addr) const {
-    check_bounds(addr, 4);
-    check_defined(addr, 4);
-
-    return static_cast<uint32_t>(
-          data_[addr]
-        | (data_[addr + 1] << 8)
-        | (data_[addr + 2] << 16)
-        | (data_[addr + 3] << 24)
-    );
-}
-
-// writing to ram
-
 void RAM::write8(uint32_t addr, uint8_t value) {
     check_bounds(addr, 1);
 
     data_[addr] = value;
     defined_[addr] = true;
-}
-
-void RAM::write16(uint32_t addr, uint16_t value) {
-    check_bounds(addr, 2);
-
-    data_[addr]     = static_cast<uint8_t>(value & 0xFF);
-    data_[addr + 1] = static_cast<uint8_t>((value >> 8) & 0xFF);
-
-    defined_[addr]     = true;
-    defined_[addr + 1] = true;
-}
-
-void RAM::write32(uint32_t addr, uint32_t value) {
-    check_bounds(addr, 4);
-
-    data_[addr] = static_cast<uint8_t>(value & 0xFF);
-    data_[addr + 1] = static_cast<uint8_t>((value >> 8) & 0xFF);
-    data_[addr + 2] = static_cast<uint8_t>((value >> 16) & 0xFF);
-    data_[addr + 3] = static_cast<uint8_t>((value >> 24) & 0xFF);
-
-    defined_[addr] = true;
-    defined_[addr + 1] = true;
-    defined_[addr + 2] = true;
-    defined_[addr + 3] = true;
 }
 
 // to write to output.bin

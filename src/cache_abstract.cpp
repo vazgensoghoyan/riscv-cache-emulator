@@ -1,15 +1,15 @@
 #include "cache_abstract.hpp"
 #include <cstring>
 
-static inline uint32_t get_offset(uint32_t addr) {
+static uint32_t get_offset(uint32_t addr) {
     return addr & ((1u << CACHE_OFFSET_LEN) - 1);
 }
 
-static inline uint32_t get_index(uint32_t addr) {
+static uint32_t get_index(uint32_t addr) {
     return (addr >> CACHE_OFFSET_LEN) & ((1u << CACHE_INDEX_LEN) - 1);
 }
 
-static inline uint32_t get_tag(uint32_t addr) {
+static uint32_t get_tag(uint32_t addr) {
     return addr >> (CACHE_OFFSET_LEN + CACHE_INDEX_LEN);
 }
 
@@ -25,6 +25,9 @@ uint32_t CacheAbstract::read32(uint32_t addr, AccessType type) {
 
     Line& line = fetch_line(addr, type);
     uint32_t off = get_offset(addr);
+    
+    if (off + 4 > CACHE_LINE_SIZE)
+        throw std::runtime_error("Unaligned cache-line access");
 
     uint32_t value;
     std::memcpy(&value, &line.data[off], sizeof(uint32_t));
@@ -36,6 +39,9 @@ void CacheAbstract::write32(uint32_t addr, uint32_t value) {
 
     Line& line = fetch_line(addr, AccessType::Data);
     uint32_t off = get_offset(addr);
+
+    if (off + 4 > CACHE_LINE_SIZE)
+        throw std::runtime_error("Unaligned cache-line access");
 
     std::memcpy(&line.data[off], &value, sizeof(uint32_t));
     line.dirty = true;
@@ -83,4 +89,23 @@ CacheAbstract::Line& CacheAbstract::fetch_line(uint32_t addr, AccessType type) {
 
     on_fill(set, way);
     return line;
+}
+
+void CacheAbstract::flush() {
+    for (uint32_t set = 0; set < CACHE_SET_COUNT; ++set) {
+        for (uint32_t way = 0; way < CACHE_WAY; ++way) {
+            Line& line = cache_[set][way];
+
+            if (!line.valid || !line.dirty) continue;
+
+            uint32_t base =
+                (line.tag << (CACHE_INDEX_LEN + CACHE_OFFSET_LEN)) |
+                (set << CACHE_OFFSET_LEN);
+
+            for (uint32_t i = 0; i < CACHE_LINE_SIZE; ++i)
+                ram_.write8(base + i, line.data[i]);
+
+            line.dirty = false;
+        }
+    }
 }

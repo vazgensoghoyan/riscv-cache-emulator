@@ -25,6 +25,8 @@ public:
 
     uint32_t read32(uint32_t addr, AccessType access_type);
     void write32(uint32_t addr, uint32_t value);
+
+    void flush(); // all changed data write back to ram
     
     CacheStats stats() const { return stats_; }
 
