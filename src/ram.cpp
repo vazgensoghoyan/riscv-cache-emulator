@@ -22,7 +22,7 @@ void RAM::check_defined(uint32_t addr, uint32_t bytes) const {
             throw std::runtime_error("Access to undefined memory");
 }
 
-// for reading from output.bin
+// for reading from input.bin
 
 void RAM::load_fragment(uint32_t addr, const std::vector<uint8_t>& data) {
     check_bounds(addr, static_cast<uint32_t>(data.size()));
@@ -32,6 +32,8 @@ void RAM::load_fragment(uint32_t addr, const std::vector<uint8_t>& data) {
         defined_[addr + i] = true;
     }
 }
+
+// reading from ram
 
 uint8_t RAM::read8(uint32_t addr) const {
     check_bounds(addr, 1);
@@ -60,6 +62,8 @@ uint32_t RAM::read32(uint32_t addr) const {
         | (data_[addr + 3] << 24)
     );
 }
+
+// writing to ram
 
 void RAM::write8(uint32_t addr, uint8_t value) {
     check_bounds(addr, 1);
@@ -91,6 +95,8 @@ void RAM::write32(uint32_t addr, uint32_t value) {
     defined_[addr + 2] = true;
     defined_[addr + 3] = true;
 }
+
+// to write to output.bin
 
 std::vector<uint8_t> RAM::dump(uint32_t addr, uint32_t size) const {
     check_bounds(addr, size);
