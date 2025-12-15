@@ -1,5 +1,4 @@
-#ifndef CONFIG_HPP
-#define CONFIG_HPP
+#pragma once
 
 #include <cstdint>
 
@@ -15,5 +14,3 @@ constexpr uint32_t CACHE_SET_COUNT = 32;
 constexpr uint32_t CACHE_WAY = 4;
 constexpr uint32_t CACHE_LINE_COUNT = CACHE_SET_COUNT * CACHE_WAY;
 constexpr uint32_t CACHE_SIZE = CACHE_LINE_COUNT * CACHE_LINE_SIZE;
-
-#endif // CONFIG_HPP

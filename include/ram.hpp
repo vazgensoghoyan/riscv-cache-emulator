@@ -1,5 +1,4 @@
-#ifndef RAM_HPP
-#define RAM_HPP
+#pragma once
 
 #include <cstdint>
 
@@ -16,5 +15,3 @@ private:
     uint32_t size_;
     uint8_t* data_;
 };
-
-#endif // RAM_HPP

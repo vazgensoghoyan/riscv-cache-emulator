@@ -1,5 +1,4 @@
-#ifndef CACHE_BPLRU_HPP
-#define CACHE_BPLRU_HPP
+#pragma once
 
 #include "cache_abstract.hpp"
 
@@ -15,5 +14,3 @@ private:
 private:
     uint8_t used[CACHE_SET_COUNT][CACHE_WAY];
 };
-
-#endif // CACHE_BPLRU_HPP

@@ -1,5 +1,4 @@
-#ifndef CACHE_LRU_HPP
-#define CACHE_LRU_HPP
+#pragma once
 
 #include "cache_abstract.hpp"
 
@@ -15,5 +14,3 @@ private:
 private:
     uint8_t last_used[CACHE_SET_COUNT][CACHE_WAY];
 };
-
-#endif // CACHE_LRU_HPP

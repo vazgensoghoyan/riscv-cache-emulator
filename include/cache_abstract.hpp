@@ -1,5 +1,4 @@
-#ifndef CACHE_ABSTRACT_HPP
-#define CACHE_ABSTRACT_HPP
+#pragma once
 
 #include <cstdint>
 #include <cstring>
@@ -52,5 +51,3 @@ protected:
 
     Line cache_[CACHE_SET_COUNT][CACHE_WAY];
 };
-
-#endif // CACHE_ABSTRACT_HPP
