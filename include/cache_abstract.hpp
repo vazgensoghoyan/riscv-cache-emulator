@@ -23,7 +23,11 @@ public:
     explicit CacheAbstract(RAM& ram);
     virtual ~CacheAbstract() = default;
 
+    uint8_t read8(uint32_t addr, AccessType access_type);
+    uint16_t read16(uint32_t addr, AccessType access_type);
     uint32_t read32(uint32_t addr, AccessType access_type);
+    void write8(uint32_t addr, uint8_t value);
+    void write16(uint32_t addr, uint16_t value);
     void write32(uint32_t addr, uint32_t value);
 
     void flush(); // all changed data write back to ram

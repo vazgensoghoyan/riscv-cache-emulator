@@ -26,6 +26,24 @@ CacheAbstract::CacheAbstract(RAM& ram)
 
 // Public API
 
+uint8_t CacheAbstract::read8(uint32_t addr, AccessType type) {
+    if (type == AccessType::Instruction)
+        stats_.instr_access++;
+    else
+        stats_.data_access++;
+
+    Line& line = fetch_line(addr, type);
+    uint32_t off = addr_offset(addr);
+    return line.data[off];
+}
+
+uint16_t CacheAbstract::read16(uint32_t addr, AccessType type) {
+    uint16_t val = 0;
+    val  = read8(addr, type);
+    val |= read8(addr + 1, type) << 8;
+    return val;
+}
+
 uint32_t CacheAbstract::read32(uint32_t addr, AccessType type) {
     if (type == AccessType::Instruction)
         stats_.instr_access++;
@@ -38,6 +56,19 @@ uint32_t CacheAbstract::read32(uint32_t addr, AccessType type) {
     uint32_t value;
     std::memcpy(&value, &line.data[off], sizeof(uint32_t));
     return value;
+}
+
+void CacheAbstract::write8(uint32_t addr, uint8_t value) {
+    stats_.data_access++;
+    Line& line = fetch_line(addr, AccessType::Data);
+    uint32_t off = addr_offset(addr);
+    line.data[off] = value;
+    line.dirty = true;
+}
+
+void CacheAbstract::write16(uint32_t addr, uint16_t value) {
+    write8(addr, value & 0xFF);
+    write8(addr + 1, (value >> 8) & 0xFF);
 }
 
 void CacheAbstract::write32(uint32_t addr, uint32_t value) {
