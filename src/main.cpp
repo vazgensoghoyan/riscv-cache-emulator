@@ -91,18 +91,19 @@ int main(int argc, char* argv[]) {
         std::string input_file = argv[2];
         InputData input = read_input_file(input_file);
 
-        RAM ram(MEMORY_SIZE);
-        load_memory(ram, input.memory);
+        RAM ram_lru(MEMORY_SIZE);
+        load_memory(ram_lru, input.memory);
 
-        CacheLRU cache_lru(ram);
+        CacheLRU cache_lru(ram_lru);
         Processor cpu_lru(cache_lru);
-
         cpu_lru.run(input.registers[0]);
         print_stats("LRU", cache_lru.stats());
 
-        CacheBpLRU cache_bplru(ram);
-        Processor cpu_bplru(cache_bplru);
+        RAM ram_bplru(MEMORY_SIZE);
+        load_memory(ram_bplru, input.memory);
 
+        CacheBpLRU cache_bplru(ram_bplru);
+        Processor cpu_bplru(cache_bplru);
         cpu_bplru.run(input.registers[0]);
         print_stats("bpLRU", cache_bplru.stats());
 

@@ -139,6 +139,7 @@ std::function<void(Command&, Processor&)> Processor::get_function(const Command&
         case 0x67: return [this](Command& c, Processor& p){ p.exec_jalr(c); };
         default: break;
     }
+    throw std::runtime_error("End of get_function method in Processor");
 }
 
 void Processor::exec_r_type(Command& c) {
