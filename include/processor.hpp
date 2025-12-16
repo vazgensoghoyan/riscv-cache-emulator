@@ -44,6 +44,8 @@ private:
 
     void validate_opcode(const Command& c);
 
+    void write_reg(uint8_t rd, uint32_t value);
+
 private:
     CacheAbstract& cache_;
     uint32_t pc;
