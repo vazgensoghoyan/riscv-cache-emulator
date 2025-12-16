@@ -3,29 +3,37 @@
 void Processor::exec_r_type(Command& c) {
     switch (c.funct3) {
         case 0x0:
-            if (c.funct7 == 0x00) write_reg(c.rd, x[c.rs1] + x[c.rs2]);      // ADD
-            else if (c.funct7 == 0x20) write_reg(c.rd, x[c.rs1] - x[c.rs2]); // SUB
-            else if (c.funct7 == 0x01) {                                     // MUL
+            if (c.funct7 == 0x01) { // MUL
                 uint64_t res = uint64_t(uint32_t(x[c.rs1])) * uint64_t(uint32_t(x[c.rs2]));
                 write_reg(c.rd, static_cast<uint32_t>(res & 0xFFFFFFFF));
             }
             break;
         case 0x1:
-            if (c.funct7 == 0x00) write_reg(c.rd, x[c.rs1] << (x[c.rs2] & 0x1F)); // SLL
-            else if (c.funct7 == 0x01) { // MULH
+            if (c.funct7 == 0x01) { // MULH
                 int64_t res = int64_t(int32_t(x[c.rs1])) * int64_t(int32_t(x[c.rs2]));
                 write_reg(c.rd, static_cast<uint32_t>((res >> 32) & 0xFFFFFFFF));
             }
             break;
-        case 0x2: write_reg(c.rd, (int32_t)x[c.rs1] < (int32_t)x[c.rs2]); break; // SLT
-        case 0x3: write_reg(c.rd, x[c.rs1] < x[c.rs2]); break;                     // SLTU
-        case 0x4: write_reg(c.rd, x[c.rs1] ^ x[c.rs2]); break;                     // XOR
-        case 0x5:
-            if (c.funct7 == 0x00) write_reg(c.rd, x[c.rs1] >> (x[c.rs2] & 0x1F));   // SRL
-            else if (c.funct7 == 0x20) write_reg(c.rd, int32_t(x[c.rs1]) >> (x[c.rs2] & 0x1F)); // SRA
+        case 0x4:
+            if (c.funct7 == 0x01) { // DIV
+                write_reg(c.rd, x[c.rs2] ? int32_t(x[c.rs1]) / int32_t(x[c.rs2]) : -1);
+            }
             break;
-        case 0x6: write_reg(c.rd, x[c.rs1] | x[c.rs2]); break; // OR
-        case 0x7: write_reg(c.rd, x[c.rs1] & x[c.rs2]); break; // AND
+        case 0x5:
+            if (c.funct7 == 0x01) { // DIVU
+                write_reg(c.rd, x[c.rs2] ? x[c.rs1] / x[c.rs2] : 0xFFFFFFFF);
+            }
+            break;
+        case 0x6:
+            if (c.funct7 == 0x01) { // REM
+                write_reg(c.rd, x[c.rs2] ? int32_t(x[c.rs1]) % int32_t(x[c.rs2]) : x[c.rs1]);
+            }
+            break;
+        case 0x7:
+            if (c.funct7 == 0x01) { // REMU
+                write_reg(c.rd, x[c.rs2] ? x[c.rs1] % x[c.rs2] : x[c.rs1]);
+            }
+            break;
     }
     pc += 4;
 }

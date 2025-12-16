@@ -91,35 +91,28 @@ Command Processor::parse(uint32_t raw_instr) {
     cmd.rs2 = (raw_instr >> 20) & 0x1F;
     cmd.funct7 = (raw_instr >> 25) & 0x7F;
     cmd.funct12 = (raw_instr >> 20) & 0xFFF;
-    cmd.imm = 0;
 
     switch (cmd.opcode) {
         case 0x03: case 0x13: case 0x67: case 0x73:
-            cmd.imm = int32_t(raw_instr) >> 20;
-            break;
-        case 0x23:
-            cmd.imm = ((raw_instr >> 25) & 0x7F) << 5 | ((raw_instr >> 7) & 0x1F);
-            if (cmd.imm & 0x800) cmd.imm |= 0xFFFFF000;
-            break;
-        case 0x63:
+            cmd.imm = int32_t(raw_instr) >> 20; break; // I-type
+        case 0x23: // S-type
+            cmd.imm = ((raw_instr >> 25) << 5) | ((raw_instr >> 7) & 0x1F);
+            if (cmd.imm & 0x800) cmd.imm |= 0xFFFFF000; break;
+        case 0x63: // B-type
             cmd.imm = ((raw_instr >> 31) & 0x1) << 12
+                    | ((raw_instr >> 7) & 0x1) << 11
                     | ((raw_instr >> 25) & 0x3F) << 5
-                    | ((raw_instr >> 8) & 0xF) << 1
-                    | ((raw_instr >> 7) & 0x1) << 11;
-            if (cmd.imm & 0x1000) cmd.imm |= 0xFFFFE000;
-            break;
-        case 0x17: case 0x37:
-            cmd.imm = raw_instr & 0xFFFFF000;
-            break;
-        case 0x6F:
+                    | ((raw_instr >> 8) & 0xF) << 1;
+            if (cmd.imm & 0x1000) cmd.imm |= 0xFFFFE000; break;
+        case 0x17: case 0x37: // U-type
+            cmd.imm = raw_instr & 0xFFFFF000; break;
+        case 0x6F: // J-type
             cmd.imm = ((raw_instr >> 31) & 0x1) << 20
-                    | ((raw_instr >> 21) & 0x3FF) << 1
+                    | ((raw_instr >> 12) & 0xFF) << 12
                     | ((raw_instr >> 20) & 0x1) << 11
-                    | ((raw_instr >> 12) & 0xFF) << 12;
-            if (cmd.imm & 0x100000) cmd.imm |= 0xFFE00000;
-            break;
+                    | ((raw_instr >> 21) & 0x3FF) << 1;
+            if (cmd.imm & 0x100000) cmd.imm |= 0xFFE00000; break;
     }
-
     return cmd;
 }
 
