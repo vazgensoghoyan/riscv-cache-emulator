@@ -11,7 +11,13 @@ uint32_t CacheBpLRU::choose_victim(uint32_t set) {
             return way;
     }
 
-    return 0;
+    for (uint32_t way = 0; way < CACHE_WAY; ++way) {
+        used[set][way] = 0;
+    }
+
+    uint32_t victim = 0;
+    used[set][victim] = 1;
+    return victim;
 }
 
 void CacheBpLRU::on_hit(uint32_t set, uint32_t way) {
