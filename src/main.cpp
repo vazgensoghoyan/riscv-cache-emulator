@@ -51,11 +51,7 @@ void print_stats(const char* name, const CacheStats& s) {
     if (total_access == 0) {
         std::printf(
             "| %-11s | %3s |       %3s |      %3s | %12d | %12d | %12d | %12d |\n",
-            name,
-            "nan%",
-            "nan%",
-            "nan%",
-            0, 0, 0, 0
+            name, "nan%", "nan%", "nan%", 0, 0, 0, 0
         );
         return;
     }
@@ -105,6 +101,7 @@ void write_output_file(const std::string& filename,
         out.write(reinterpret_cast<const char*>(&val), sizeof(val));
     }
 
+    out.write(reinterpret_cast<const char*>(&start_addr), sizeof(start_addr));
     out.write(reinterpret_cast<const char*>(&size), sizeof(size));
 
     for (uint32_t i = 0; i < size; ++i) {
@@ -117,11 +114,28 @@ void write_output_file(const std::string& filename,
 
 int main(int argc, char* argv[]) {
     try {
-        if (argc != 3 || std::string(argv[1]) != "-i") {
-            throw std::runtime_error("Usage: ./emulator -i <input_file>");
+        std::string input_file;
+        std::string output_file;
+        uint32_t out_addr = 0, out_size = 0;
+        bool has_input = false, has_output = false;
+
+        for (int i = 1; i < argc; ++i) {
+            std::string arg = argv[i];
+            if (arg == "-i") {
+                if (i + 1 >= argc) throw std::runtime_error("Missing input file after -i");
+                input_file = argv[++i];
+                has_input = true;
+            } else if (arg == "-o") {
+                if (i + 3 >= argc) throw std::runtime_error("Missing arguments for -o");
+                output_file = argv[++i];
+                out_addr = std::stoul(argv[++i], nullptr, 0); // поддержка 0x
+                out_size = std::stoul(argv[++i], nullptr, 0);
+                has_output = true;
+            } else {
+                throw std::runtime_error("Unknown argument: " + arg);
+            }
         }
 
-        std::string input_file = argv[2];
         InputData input = read_input_file(input_file);
 
         RAM ram_lru(MEMORY_SIZE);
@@ -129,8 +143,8 @@ int main(int argc, char* argv[]) {
 
         CacheLRU cache_lru(ram_lru);
         Processor cpu_lru(cache_lru);
-        cpu_lru.set_initial_state(input.registers[0], input.registers);
-        cpu_lru.run(input.registers[1]);
+        cpu_lru.set_initial_state(input.registers);
+        cpu_lru.run();
         print_stats("LRU", cache_lru.stats());
 
         RAM ram_bplru(MEMORY_SIZE);
@@ -138,9 +152,12 @@ int main(int argc, char* argv[]) {
 
         CacheBpLRU cache_bplru(ram_bplru);
         Processor cpu_bplru(cache_bplru);
-        cpu_bplru.set_initial_state(input.registers[0], input.registers);
-        cpu_bplru.run(input.registers[1]);
+        cpu_bplru.set_initial_state(input.registers);
+        cpu_bplru.run();
         print_stats("bpLRU", cache_bplru.stats());
+
+        if (has_output)
+            write_output_file(output_file, cpu_lru, ram_lru, out_addr, out_size);
 
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << "\n";
