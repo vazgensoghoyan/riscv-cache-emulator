@@ -91,24 +91,19 @@ int main(int argc, char* argv[]) {
         std::string input_file = argv[2];
         InputData input = read_input_file(input_file);
 
-        // ------------------ Создание RAM ------------------
         RAM ram(MEMORY_SIZE);
         load_memory(ram, input.memory);
 
         CacheLRU cache_lru(ram);
         Processor cpu_lru(cache_lru);
 
-        cpu_lru.run(input.registers[1]);
-
-        cpu_lru.run(input.registers[0]); // pc из input
-
+        cpu_lru.run(input.registers[0]);
         print_stats("LRU", cache_lru.stats());
 
         CacheBpLRU cache_bplru(ram);
         Processor cpu_bplru(cache_bplru);
 
         cpu_bplru.run(input.registers[0]);
-
         print_stats("bpLRU", cache_bplru.stats());
 
     } catch (const std::exception& e) {

@@ -20,11 +20,29 @@ void Processor::run(uint32_t start_ra) {
     cache_.flush();
 }
 
+uint32_t Processor::read_mem32(uint32_t addr, AccessType type) {
+    return cache_.read32(addr, type);
+}
+
+void Processor::write_mem32(uint32_t addr, uint32_t value) {
+    cache_.write32(addr, value);
+}
+
 uint32_t Processor::read_mem(uint32_t addr, uint32_t size, bool is_signed) {
     uint32_t value = 0;
-    for (uint32_t i = 0; i < size; ++i) {
-        value |= cache_.read32(addr + i, AccessType::Data) & 0xFFu << (8 * i);
+
+    switch (size) {
+        case 1: value = cache_.read8(addr, AccessType::Data); break;
+        case 2: 
+            value  = cache_.read8(addr, AccessType::Data);
+            value |= cache_.read8(addr + 1, AccessType::Data) << 8;
+            break;
+        case 4:
+            value = cache_.read32(addr, AccessType::Data);
+            break;
+        default: throw std::runtime_error("Invalid memory size");
     }
+
     if (is_signed) {
         switch (size) {
             case 1: return int32_t(int8_t(value));
@@ -35,18 +53,18 @@ uint32_t Processor::read_mem(uint32_t addr, uint32_t size, bool is_signed) {
     return value;
 }
 
-uint32_t Processor::read_mem32(uint32_t addr, AccessType type) {
-    return cache_.read32(addr, type);
-}
-
 void Processor::write_mem(uint32_t addr, uint32_t value, uint32_t size) {
-    for (uint32_t i = 0; i < size; ++i) {
-        cache_.write32(addr + i, (value >> (8 * i)) & 0xFF);
+    switch (size) {
+        case 1: cache_.write8(addr, value & 0xFF); break;
+        case 2:
+            cache_.write8(addr, value & 0xFF);
+            cache_.write8(addr + 1, (value >> 8) & 0xFF);
+            break;
+        case 4:
+            cache_.write32(addr, value);
+            break;
+        default: throw std::runtime_error("Invalid memory size");
     }
-}
-
-void Processor::write_mem32(uint32_t addr, uint32_t value) {
-    cache_.write32(addr, value);
 }
 
 Command Processor::parse(uint32_t raw_instr) {
@@ -206,8 +224,8 @@ void Processor::exec_branch(Command& c) {
 }
 
 void Processor::exec_system(Command& c) {
-    if (c.funct3 == 0x0) {
-        if (c.funct12 == 0x0 || c.funct12 == 0x1) running = false; // ECALL/EBREAK
+    if (c.funct3 == 0x0 && (c.funct12 == 0x0 || c.funct12 == 0x1)) {
+        running = false; // ECALL/EBREAK
     }
     pc += 4;
 }
