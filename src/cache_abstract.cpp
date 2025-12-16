@@ -33,15 +33,19 @@ uint8_t CacheAbstract::read8(uint32_t addr, AccessType type) {
         stats_.data_access++;
 
     Line& line = fetch_line(addr, type);
-    uint32_t off = addr_offset(addr);
-    return line.data[off];
+    return line.data[addr_offset(addr)];
 }
 
 uint16_t CacheAbstract::read16(uint32_t addr, AccessType type) {
-    uint16_t val = 0;
-    val  = read8(addr, type);
-    val |= read8(addr + 1, type) << 8;
-    return val;
+    if (type == AccessType::Instruction)
+        stats_.instr_access++;
+    else
+        stats_.data_access++;
+
+    Line& line = fetch_line(addr, type);
+    uint16_t value;
+    std::memcpy(&value, &line.data[addr_offset(addr)], sizeof(uint16_t));
+    return value;
 }
 
 uint32_t CacheAbstract::read32(uint32_t addr, AccessType type) {
@@ -51,35 +55,36 @@ uint32_t CacheAbstract::read32(uint32_t addr, AccessType type) {
         stats_.data_access++;
 
     Line& line = fetch_line(addr, type);
-    uint32_t off = addr_offset(addr);
-
     uint32_t value;
-    std::memcpy(&value, &line.data[off], sizeof(uint32_t));
+    std::memcpy(&value, &line.data[addr_offset(addr)], sizeof(uint32_t));
     return value;
 }
 
 void CacheAbstract::write8(uint32_t addr, uint8_t value) {
     stats_.data_access++;
+
     Line& line = fetch_line(addr, AccessType::Data);
-    uint32_t off = addr_offset(addr);
-    line.data[off] = value;
+    line.data[addr_offset(addr)] = value;
     line.dirty = true;
 }
 
 void CacheAbstract::write16(uint32_t addr, uint16_t value) {
-    write8(addr, value & 0xFF);
-    write8(addr + 1, (value >> 8) & 0xFF);
+    stats_.data_access++;
+
+    Line& line = fetch_line(addr, AccessType::Data);
+    std::memcpy(&line.data[addr_offset(addr)], &value, sizeof(uint16_t));
+    line.dirty = true;
 }
 
 void CacheAbstract::write32(uint32_t addr, uint32_t value) {
     stats_.data_access++;
 
     Line& line = fetch_line(addr, AccessType::Data);
-    uint32_t off = addr_offset(addr);
-
-    std::memcpy(&line.data[off], &value, sizeof(uint32_t));
+    std::memcpy(&line.data[addr_offset(addr)], &value, sizeof(uint32_t));
     line.dirty = true;
 }
+
+// protected
 
 CacheAbstract::Line& CacheAbstract::fetch_line(uint32_t addr, AccessType type) {
     const uint32_t set = addr_index(addr);
