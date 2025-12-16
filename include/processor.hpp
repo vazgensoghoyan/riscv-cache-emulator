@@ -25,13 +25,10 @@ public:
     void run(uint32_t start_ra);
 
     uint32_t read_mem32(uint32_t addr, AccessType type);
-
     void write_mem32(uint32_t addr, uint32_t value);
 
 private:
-
     Command parse(uint32_t raw_instr);
-
     std::function<void(Command&, Processor&)> get_function(const Command& cmd);
 
     void exec_r_type(Command& c);
@@ -45,11 +42,11 @@ private:
     void exec_jal(Command& c);
     void exec_jalr(Command& c);
 
+    void validate_opcode(const Command& c);
+
 private:
     CacheAbstract& cache_;
-
     uint32_t pc;
     uint32_t x[32];
     bool running;
-
 };

@@ -2,12 +2,16 @@
 
 #include <stdexcept>
 
-// constructor
+// constructor and destructor
 
 RAM::RAM(uint32_t size)
     : size_(size),
       data_(new uint8_t[size])
 {}
+
+RAM::~RAM() {
+    delete[] data_; 
+}
 
 // reading
 
