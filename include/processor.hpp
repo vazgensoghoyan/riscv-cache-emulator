@@ -44,6 +44,9 @@ private:
 
     void validate_opcode(const Command& c);
 
+    uint32_t read_mem(uint32_t addr, uint32_t size, bool is_signed);
+    void write_mem(uint32_t addr, uint32_t value, uint32_t size);
+
     void write_reg(uint8_t rd, uint32_t value);
 
 private:

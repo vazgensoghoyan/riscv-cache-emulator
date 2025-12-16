@@ -20,8 +20,29 @@ void Processor::run(uint32_t start_ra) {
     cache_.flush();
 }
 
+uint32_t Processor::read_mem(uint32_t addr, uint32_t size, bool is_signed) {
+    uint32_t value = 0;
+    for (uint32_t i = 0; i < size; ++i) {
+        value |= cache_.read32(addr + i, AccessType::Data) & 0xFFu << (8 * i);
+    }
+    if (is_signed) {
+        switch (size) {
+            case 1: return int32_t(int8_t(value));
+            case 2: return int32_t(int16_t(value));
+            default: return value;
+        }
+    }
+    return value;
+}
+
 uint32_t Processor::read_mem32(uint32_t addr, AccessType type) {
     return cache_.read32(addr, type);
+}
+
+void Processor::write_mem(uint32_t addr, uint32_t value, uint32_t size) {
+    for (uint32_t i = 0; i < size; ++i) {
+        cache_.write32(addr + i, (value >> (8 * i)) & 0xFF);
+    }
 }
 
 void Processor::write_mem32(uint32_t addr, uint32_t value) {
@@ -107,11 +128,17 @@ void Processor::exec_r_type(Command& c) {
         case 0x0:
             if (c.funct7 == 0x00) write_reg(c.rd, x[c.rs1] + x[c.rs2]);      // ADD
             else if (c.funct7 == 0x20) write_reg(c.rd, x[c.rs1] - x[c.rs2]); // SUB
-            else if (c.funct7 == 0x01) write_reg(c.rd, int64_t(x[c.rs1]) * int64_t(x[c.rs2])); // MUL
+            else if (c.funct7 == 0x01) {                                     // MUL
+                uint64_t res = uint64_t(uint32_t(x[c.rs1])) * uint64_t(uint32_t(x[c.rs2]));
+                write_reg(c.rd, static_cast<uint32_t>(res & 0xFFFFFFFF));
+            }
             break;
         case 0x1:
             if (c.funct7 == 0x00) write_reg(c.rd, x[c.rs1] << (x[c.rs2] & 0x1F)); // SLL
-            else if (c.funct7 == 0x01) write_reg(c.rd, int64_t(x[c.rs1]) * int64_t(x[c.rs2]) >> 32); // MULH
+            else if (c.funct7 == 0x01) { // MULH
+                int64_t res = int64_t(int32_t(x[c.rs1])) * int64_t(int32_t(x[c.rs2]));
+                write_reg(c.rd, static_cast<uint32_t>((res >> 32) & 0xFFFFFFFF));
+            }
             break;
         case 0x2: write_reg(c.rd, (int32_t)x[c.rs1] < (int32_t)x[c.rs2]); break; // SLT
         case 0x3: write_reg(c.rd, x[c.rs1] < x[c.rs2]); break;                     // SLTU
@@ -129,11 +156,11 @@ void Processor::exec_r_type(Command& c) {
 void Processor::exec_load(Command& c) {
     uint32_t addr = x[c.rs1] + c.imm;
     switch (c.funct3) {
-        case 0x0: write_reg(c.rd, int8_t(read_mem32(addr, AccessType::Data) & 0xFF)); break; // LB
-        case 0x1: write_reg(c.rd, int16_t(read_mem32(addr, AccessType::Data) & 0xFFFF)); break; // LH
-        case 0x2: write_reg(c.rd, read_mem32(addr, AccessType::Data)); break; // LW
-        case 0x4: write_reg(c.rd, read_mem32(addr, AccessType::Data) & 0xFF); break; // LBU
-        case 0x5: write_reg(c.rd, read_mem32(addr, AccessType::Data) & 0xFFFF); break; // LHU
+        case 0x0: write_reg(c.rd, read_mem(addr, 1, true));  break; // LB
+        case 0x1: write_reg(c.rd, read_mem(addr, 2, true));  break; // LH
+        case 0x2: write_reg(c.rd, read_mem(addr, 4, false)); break; // LW
+        case 0x4: write_reg(c.rd, read_mem(addr, 1, false)); break; // LBU
+        case 0x5: write_reg(c.rd, read_mem(addr, 2, false)); break; // LHU
     }
     pc += 4;
 }
@@ -158,9 +185,9 @@ void Processor::exec_imm_arith(Command& c) {
 void Processor::exec_store(Command& c) {
     uint32_t addr = x[c.rs1] + c.imm;
     switch (c.funct3) {
-        case 0x0: write_mem32(addr, x[c.rs2] & 0xFF); break;   // SB
-        case 0x1: write_mem32(addr, x[c.rs2] & 0xFFFF); break; // SH
-        case 0x2: write_mem32(addr, x[c.rs2]); break;          // SW
+        case 0x0: write_mem(addr, x[c.rs2], 1); break; // SB
+        case 0x1: write_mem(addr, x[c.rs2], 2); break; // SH
+        case 0x2: write_mem(addr, x[c.rs2], 4); break; // SW
     }
     pc += 4;
 }
