@@ -4,6 +4,13 @@ Processor::Processor(CacheAbstract& cache) : cache_(cache), pc(0), running(true)
     for (auto& r : x) r = 0;
 }
 
+void Processor::set_initial_state(uint32_t pc_init, const uint32_t regs[32]) {
+    pc = pc_init;
+    for (int i = 0; i < 32; ++i)
+        x[i] = regs[i];
+    x[0] = 0;
+}
+
 void Processor::run(uint32_t start_ra) {
     while (running) {
         if (pc == start_ra) break;
@@ -65,6 +72,12 @@ void Processor::write_mem(uint32_t addr, uint32_t value, uint32_t size) {
             break;
         default: throw std::runtime_error("Invalid memory size");
     }
+}
+
+uint32_t Processor::get_reg(int i) const {
+    if (i < 0 || i >= 32)
+        std::out_of_range("Invalid register index");
+    return x[i];
 }
 
 Command Processor::parse(uint32_t raw_instr) {

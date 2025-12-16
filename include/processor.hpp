@@ -21,11 +21,14 @@ struct Command {
 class Processor {
 public:
     explicit Processor(CacheAbstract& cache);
-
+    
+    void set_initial_state(uint32_t pc_init, const uint32_t regs[32]);
     void run(uint32_t start_ra);
 
     uint32_t read_mem32(uint32_t addr, AccessType type);
     void write_mem32(uint32_t addr, uint32_t value);
+
+    uint32_t get_reg(int i) const;
 
 private:
     Command parse(uint32_t raw_instr);
