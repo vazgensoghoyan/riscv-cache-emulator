@@ -1,5 +1,4 @@
 #include "cache_bplru.hpp"
-#include <cstring>
 
 CacheBpLRU::CacheBpLRU(RAM& ram) : CacheAbstract(ram) {
     std::memset(used, 0, sizeof(used));
