@@ -26,9 +26,6 @@ public:
 
     void run();
 
-    uint32_t read_mem32(uint32_t addr, AccessType type);
-    void write_mem32(uint32_t addr, uint32_t value);
-
     uint32_t get_reg(int i) const;
 
 private:

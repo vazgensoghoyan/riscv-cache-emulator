@@ -28,27 +28,21 @@ void Processor::run() {
     cache_.flush();
 }
 
-uint32_t Processor::read_mem32(uint32_t addr, AccessType type) {
-    return cache_.read32(addr, type);
-}
-
-void Processor::write_mem32(uint32_t addr, uint32_t value) {
-    cache_.write32(addr, value);
-}
-
 uint32_t Processor::read_mem(uint32_t addr, uint32_t size, bool is_signed) {
     uint32_t value = 0;
 
     switch (size) {
-        case 1: value = cache_.read8(addr, AccessType::Data); break;
+        case 1: 
+            value = cache_.read8(addr, AccessType::Data); 
+            break;
         case 2: 
-            value  = cache_.read8(addr, AccessType::Data);
-            value |= cache_.read8(addr + 1, AccessType::Data) << 8;
+            value = cache_.read16(addr, AccessType::Data);
             break;
         case 4:
             value = cache_.read32(addr, AccessType::Data);
             break;
-        default: throw std::runtime_error("Invalid memory size");
+        default: 
+            throw std::runtime_error("Invalid memory size");
     }
 
     if (is_signed) {
@@ -58,20 +52,23 @@ uint32_t Processor::read_mem(uint32_t addr, uint32_t size, bool is_signed) {
             default: return value;
         }
     }
+
     return value;
 }
 
 void Processor::write_mem(uint32_t addr, uint32_t value, uint32_t size) {
     switch (size) {
-        case 1: cache_.write8(addr, value & 0xFF); break;
+        case 1: 
+            cache_.write8(addr, value & 0xFF); 
+            break;
         case 2:
-            cache_.write8(addr, value & 0xFF);
-            cache_.write8(addr + 1, (value >> 8) & 0xFF);
+            cache_.write16(addr, value & 0xFFFF);
             break;
         case 4:
             cache_.write32(addr, value);
             break;
-        default: throw std::runtime_error("Invalid memory size");
+        default: 
+            throw std::runtime_error("Invalid memory size");
     }
 }
 
@@ -94,24 +91,29 @@ Command Processor::parse(uint32_t raw_instr) {
 
     switch (cmd.opcode) {
         case 0x03: case 0x13: case 0x67: case 0x73:
-            cmd.imm = int32_t(raw_instr) >> 20; break; // I-type
+            cmd.imm = int32_t(raw_instr) >> 20; 
+            break; // I-type
         case 0x23: // S-type
             cmd.imm = ((raw_instr >> 25) << 5) | ((raw_instr >> 7) & 0x1F);
-            if (cmd.imm & 0x800) cmd.imm |= 0xFFFFF000; break;
+            if (cmd.imm & 0x800) cmd.imm |= 0xFFFFF000; 
+            break;
         case 0x63: // B-type
             cmd.imm = ((raw_instr >> 31) & 0x1) << 12
                     | ((raw_instr >> 7) & 0x1) << 11
                     | ((raw_instr >> 25) & 0x3F) << 5
                     | ((raw_instr >> 8) & 0xF) << 1;
-            if (cmd.imm & 0x1000) cmd.imm |= 0xFFFFE000; break;
+            if (cmd.imm & 0x1000) cmd.imm |= 0xFFFFE000; 
+            break;
         case 0x17: case 0x37: // U-type
-            cmd.imm = raw_instr & 0xFFFFF000; break;
+            cmd.imm = raw_instr & 0xFFFFF000; 
+            break;
         case 0x6F: // J-type
             cmd.imm = ((raw_instr >> 31) & 0x1) << 20
                     | ((raw_instr >> 12) & 0xFF) << 12
                     | ((raw_instr >> 20) & 0x1) << 11
                     | ((raw_instr >> 21) & 0x3FF) << 1;
-            if (cmd.imm & 0x100000) cmd.imm |= 0xFFE00000; break;
+            if (cmd.imm & 0x100000) cmd.imm |= 0xFFE00000; 
+            break;
     }
     return cmd;
 }
