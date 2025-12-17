@@ -17,6 +17,9 @@ void Processor::run() {
 
         auto f = get_function(cmd);
         f(cmd, *this);
+
+        pc_ += 4;
+        
     } while (pc_ != start_ra_);
 
     cache_.flush();

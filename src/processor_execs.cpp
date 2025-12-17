@@ -35,7 +35,6 @@ void Processor::exec_r_type(Command& c) {
             }
             break;
     }
-    pc_ += 4;
 }
 
 void Processor::exec_load(Command& c) {
@@ -47,7 +46,6 @@ void Processor::exec_load(Command& c) {
         case 0x4: write_reg(c.rd, read_mem(addr, 1, false)); break; // LBU
         case 0x5: write_reg(c.rd, read_mem(addr, 2, false)); break; // LHU
     }
-    pc_ += 4;
 }
 
 void Processor::exec_imm_arith(Command& c) {
@@ -64,7 +62,6 @@ void Processor::exec_imm_arith(Command& c) {
             else write_reg(c.rd, int32_t(regs_[c.rs1]) >> (c.imm & 0x1F));                // SRAI
             break;
     }
-    pc_ += 4;
 }
 
 void Processor::exec_store(Command& c) {
@@ -74,7 +71,6 @@ void Processor::exec_store(Command& c) {
         case 0x1: write_mem(addr, regs_[c.rs2], 2); break; // SH
         case 0x2: write_mem(addr, regs_[c.rs2], 4); break; // SW
     }
-    pc_ += 4;
 }
 
 void Processor::exec_branch(Command& c) {
@@ -87,32 +83,31 @@ void Processor::exec_branch(Command& c) {
         case 0x6: take = regs_[c.rs1] < regs_[c.rs2]; break; // BLTU
         case 0x7: take = regs_[c.rs1] >= regs_[c.rs2]; break; // BGEU
     }
-    pc_ += take ? c.imm : 4;
+    if (take) pc_ += c.imm - 4;
 }
 
 void Processor::exec_system(Command& c) {
     if (c.funct3 == 0x0 && (c.funct12 == 0x0 || c.funct12 == 0x1)) {
-        pc_ = start_ra_; // ECALL/EBREAK
+        pc_ = start_ra_ - 4; // ECALL/EBREAK
     }
 }
 
 void Processor::exec_lui(Command& c) { 
     write_reg(c.rd, c.imm); 
-    pc_ += 4; 
 }
 
 void Processor::exec_auipc(Command& c) { 
     write_reg(c.rd, pc_ + c.imm); 
-    pc_ += 4; 
 }
 
 void Processor::exec_jal(Command& c) { 
     write_reg(c.rd, pc_ + 4); 
-    pc_ += c.imm; 
+    pc_ += c.imm - 4; 
 }
 
 void Processor::exec_jalr(Command& c) { 
     uint32_t tmp = pc_ + 4; 
     pc_ = (regs_[c.rs1] + c.imm) & ~1; 
-    write_reg(c.rd, tmp); 
+    write_reg(c.rd, tmp);
+    pc_ -= 4;
 }
