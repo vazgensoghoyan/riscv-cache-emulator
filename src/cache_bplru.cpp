@@ -6,25 +6,25 @@ CacheBpLRU::CacheBpLRU(RAM& ram) : CacheAbstract(ram) {
 
 uint32_t CacheBpLRU::choose_victim(uint32_t set) {
     for (uint32_t way = 0; way < CACHE_WAY; ++way) {
-        if (used[set][way] == 0)
+        if (!used[set][way])
             return way;
     }
 
     for (uint32_t way = 0; way < CACHE_WAY; ++way) {
-        used[set][way] = 0;
+        used[set][way] = false;
     }
 
     uint32_t victim = 0;
-    used[set][victim] = 1;
+    used[set][victim] = true;
     return victim;
 }
 
 void CacheBpLRU::on_hit(uint32_t set, uint32_t way) {
-    used[set][way] = 1;
+    used[set][way] = true;
 
     bool all_used = true;
     for (uint32_t w = 0; w < CACHE_WAY; ++w) {
-        if (used[set][w] == 0) {
+        if (!used[set][w]) {
             all_used = false;
             break;
         }
@@ -32,9 +32,9 @@ void CacheBpLRU::on_hit(uint32_t set, uint32_t way) {
 
     if (all_used) {
         for (uint32_t w = 0; w < CACHE_WAY; ++w)
-            used[set][w] = 0;
+            used[set][w] = false;
 
-        used[set][way] = 1;
+        used[set][way] = true;
     }
 }
 

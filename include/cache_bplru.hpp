@@ -12,5 +12,5 @@ private:
     void on_fill(uint32_t set, uint32_t way) override;
 
 private:
-    uint8_t used[CACHE_SET_COUNT][CACHE_WAY];
+    bool used[CACHE_SET_COUNT][CACHE_WAY];
 };
