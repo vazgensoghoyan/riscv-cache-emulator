@@ -1,12 +1,14 @@
 #include "processor.hpp"
 
-Processor::Processor(CacheAbstract& cache, const std::vector<uint32_t>& regs) : cache_(cache), regs_(regs), pc_(regs_[0]), running_(true) {
-    pc_ = 0;
+Processor::Processor(CacheAbstract& cache, const std::vector<uint32_t>& regs) 
+    : cache_(cache)
+    , regs_(regs)
+    , pc_(regs_[0])
+    , start_ra_(regs[1]) {
 }
 
 void Processor::run() {
-    uint32_t start_ra = regs_[1];
-    while (running_) {
+    do {
         uint32_t instr = cache_.read32(pc_, AccessType::Instruction);
 
         Command cmd = parse(instr);
@@ -15,9 +17,7 @@ void Processor::run() {
 
         auto f = get_function(cmd);
         f(cmd, *this);
-
-        if (pc_ == start_ra) break;
-    }
+    } while (pc_ != start_ra_);
 
     cache_.flush();
 }

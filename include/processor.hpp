@@ -53,6 +53,6 @@ private:
     CacheAbstract& cache_;
     std::vector<uint32_t> regs_;
     uint32_t pc_;
-    bool running_;
+    uint32_t start_ra_;
 
 };

@@ -92,9 +92,8 @@ void Processor::exec_branch(Command& c) {
 
 void Processor::exec_system(Command& c) {
     if (c.funct3 == 0x0 && (c.funct12 == 0x0 || c.funct12 == 0x1)) {
-        running_ = false; // ECALL/EBREAK
+        pc_ = start_ra_; // ECALL/EBREAK
     }
-    pc_ += 4;
 }
 
 void Processor::exec_lui(Command& c) { 
