@@ -1,19 +1,23 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.25)
 
-project(RISCV_Emulator LANGUAGES CXX)
+project(RISCV_Emulator VERSION 1.0 LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
-set(SOURCE_FILES
-    src/main.cpp
-    src/ram.cpp
-    src/cache_abstract.cpp
-    src/cache_lru.cpp
-    src/cache_bplru.cpp
-    src/processor.cpp
+if (MSVC)
+    add_compile_options(/W4 /permissive-)
+else()
+    add_compile_options(-Wall -Wextra -Wpedantic -O2)
+endif()
+
+include_directories(${PROJECT_SOURCE_DIR}/include)
+
+file(GLOB_RECURSE SOURCES "${PROJECT_SOURCE_DIR}/src/*.cpp")
+
+add_executable(riscv_emulator ${SOURCES})
+
+set_target_properties(riscv_emulator PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/bin"
 )
-
-add_executable(emulator ${SOURCE_FILES})
-
-target_include_directories(emulator PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)

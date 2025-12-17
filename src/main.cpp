@@ -14,7 +14,7 @@
 #include "config.hpp"
 
 struct InputData {
-    uint32_t registers[32]{};
+    std::vector<uint32_t> registers;
     std::map<uint32_t, std::vector<uint8_t>> memory;
 };
 
@@ -24,7 +24,8 @@ InputData read_input_file(const std::string& filename) {
     std::ifstream in(filename, std::ios::binary);
     if (!in) throw std::runtime_error("Cannot open input file");
 
-    in.read(reinterpret_cast<char*>(input.registers), sizeof(input.registers));
+    input.registers.resize(32);
+    in.read(reinterpret_cast<char*>(input.registers.data()), sizeof(input.registers));
     if (!in) throw std::runtime_error("Cannot read registers");
 
     while (true) {
@@ -117,14 +118,13 @@ int main(int argc, char* argv[]) {
         std::string input_file;
         std::string output_file;
         uint32_t out_addr = 0, out_size = 0;
-        bool has_input = false, has_output = false;
+        bool has_output = false;
 
         for (int i = 1; i < argc; ++i) {
             std::string arg = argv[i];
             if (arg == "-i") {
                 if (i + 1 >= argc) throw std::runtime_error("Missing input file after -i");
                 input_file = argv[++i];
-                has_input = true;
             } else if (arg == "-o") {
                 if (i + 3 >= argc) throw std::runtime_error("Missing arguments for -o");
                 output_file = argv[++i];
@@ -142,8 +142,7 @@ int main(int argc, char* argv[]) {
         load_memory(ram_lru, input.memory);
 
         CacheLRU cache_lru(ram_lru);
-        Processor cpu_lru(cache_lru);
-        cpu_lru.set_initial_state(input.registers);
+        Processor cpu_lru(cache_lru, input.registers);
         cpu_lru.run();
         print_stats("LRU", cache_lru.stats());
 
@@ -151,8 +150,7 @@ int main(int argc, char* argv[]) {
         load_memory(ram_bplru, input.memory);
 
         CacheBpLRU cache_bplru(ram_bplru);
-        Processor cpu_bplru(cache_bplru);
-        cpu_bplru.set_initial_state(input.registers);
+        Processor cpu_bplru(cache_bplru, input.registers);
         cpu_bplru.run();
         print_stats("bpLRU", cache_bplru.stats());
 

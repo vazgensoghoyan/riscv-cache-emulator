@@ -1,28 +1,22 @@
 #include "processor.hpp"
 
-Processor::Processor(CacheAbstract& cache) : cache_(cache), pc(0), running(true) {
-    for (auto& r : x) r = 0;
-}
-
-void Processor::set_initial_state(const uint32_t regs[32]) {
-    pc = regs[0];
-    for (int i = 0; i < 32; ++i)
-        x[i] = regs[i];
-    x[0] = 0;
+Processor::Processor(CacheAbstract& cache, const std::vector<uint32_t>& regs) : cache_(cache), x_(regs), pc_(x_[0]), running_(true) {
+    pc_ = 0;
 }
 
 void Processor::run() {
-    uint32_t start_ra = x[1];
-    while (running) {
-        if (pc == start_ra) break;
+    uint32_t start_ra = x_[1];
+    while (running_) {
+        uint32_t instr = cache_.read32(pc_, AccessType::Instruction);
 
-        uint32_t instr = cache_.read32(pc, AccessType::Instruction);
         Command cmd = parse(instr);
 
         validate_opcode(cmd);  // Проверка валидности opcode/funct
 
         auto f = get_function(cmd);
         f(cmd, *this);
+
+        if (pc_ == start_ra) break;
     }
 
     cache_.flush();
@@ -75,7 +69,7 @@ void Processor::write_mem(uint32_t addr, uint32_t value, uint32_t size) {
 uint32_t Processor::get_reg(int i) const {
     if (i < 0 || i >= 32)
         std::out_of_range("Invalid register index");
-    return x[i];
+    return x_[i];
 }
 
 Command Processor::parse(uint32_t raw_instr) {
@@ -130,8 +124,8 @@ void Processor::validate_opcode(const Command& c) {
 }
 
 void Processor::write_reg(uint8_t rd, uint32_t value) {
-    x[rd] = value;
-    x[0] = 0;
+    x_[rd] = value;
+    x_[0] = 0;
 }
 
 std::function<void(Command&, Processor&)> Processor::get_function(const Command& cmd) {

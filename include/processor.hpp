@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <functional>
 #include <stdexcept>
+#include <vector>
 
 #include "cache_abstract.hpp"
 
@@ -20,10 +21,8 @@ struct Command {
 
 class Processor {
 public:
-    explicit Processor(CacheAbstract& cache);
+    explicit Processor(CacheAbstract& cache, const std::vector<uint32_t>& regs);
     
-    void set_initial_state(const uint32_t regs[32]);
-
     void run();
 
     uint32_t get_reg(int i) const;
@@ -52,7 +51,8 @@ private:
 
 private:
     CacheAbstract& cache_;
-    uint32_t pc;
-    uint32_t x[32];
-    bool running;
+    std::vector<uint32_t> x_;
+    uint32_t pc_;
+    bool running_;
+
 };
