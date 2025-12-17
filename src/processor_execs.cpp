@@ -4,34 +4,34 @@ void Processor::exec_r_type(Command& c) {
     switch (c.funct3) {
         case 0x0:
             if (c.funct7 == 0x01) { // MUL
-                uint64_t res = uint64_t(uint32_t(x_[c.rs1])) * uint64_t(uint32_t(x_[c.rs2]));
+                uint64_t res = uint64_t(uint32_t(regs_[c.rs1])) * uint64_t(uint32_t(regs_[c.rs2]));
                 write_reg(c.rd, static_cast<uint32_t>(res & 0xFFFFFFFF));
             }
             break;
         case 0x1:
             if (c.funct7 == 0x01) { // MULH
-                int64_t res = int64_t(int32_t(x_[c.rs1])) * int64_t(int32_t(x_[c.rs2]));
+                int64_t res = int64_t(int32_t(regs_[c.rs1])) * int64_t(int32_t(regs_[c.rs2]));
                 write_reg(c.rd, static_cast<uint32_t>((res >> 32) & 0xFFFFFFFF));
             }
             break;
         case 0x4:
             if (c.funct7 == 0x01) { // DIV
-                write_reg(c.rd, x_[c.rs2] ? int32_t(x_[c.rs1]) / int32_t(x_[c.rs2]) : -1);
+                write_reg(c.rd, regs_[c.rs2] ? int32_t(regs_[c.rs1]) / int32_t(regs_[c.rs2]) : -1);
             }
             break;
         case 0x5:
             if (c.funct7 == 0x01) { // DIVU
-                write_reg(c.rd, x_[c.rs2] ? x_[c.rs1] / x_[c.rs2] : 0xFFFFFFFF);
+                write_reg(c.rd, regs_[c.rs2] ? regs_[c.rs1] / regs_[c.rs2] : 0xFFFFFFFF);
             }
             break;
         case 0x6:
             if (c.funct7 == 0x01) { // REM
-                write_reg(c.rd, x_[c.rs2] ? int32_t(x_[c.rs1]) % int32_t(x_[c.rs2]) : x_[c.rs1]);
+                write_reg(c.rd, regs_[c.rs2] ? int32_t(regs_[c.rs1]) % int32_t(regs_[c.rs2]) : regs_[c.rs1]);
             }
             break;
         case 0x7:
             if (c.funct7 == 0x01) { // REMU
-                write_reg(c.rd, x_[c.rs2] ? x_[c.rs1] % x_[c.rs2] : x_[c.rs1]);
+                write_reg(c.rd, regs_[c.rs2] ? regs_[c.rs1] % regs_[c.rs2] : regs_[c.rs1]);
             }
             break;
     }
@@ -39,7 +39,7 @@ void Processor::exec_r_type(Command& c) {
 }
 
 void Processor::exec_load(Command& c) {
-    uint32_t addr = x_[c.rs1] + c.imm;
+    uint32_t addr = regs_[c.rs1] + c.imm;
     switch (c.funct3) {
         case 0x0: write_reg(c.rd, read_mem(addr, 1, true));  break; // LB
         case 0x1: write_reg(c.rd, read_mem(addr, 2, true));  break; // LH
@@ -52,27 +52,27 @@ void Processor::exec_load(Command& c) {
 
 void Processor::exec_imm_arith(Command& c) {
     switch (c.funct3) {
-        case 0x0: write_reg(c.rd, x_[c.rs1] + c.imm); break;           // ADDI
-        case 0x2: write_reg(c.rd, (int32_t)x_[c.rs1] < c.imm); break;   // SLTI
-        case 0x3: write_reg(c.rd, x_[c.rs1] < (uint32_t)c.imm); break; // SLTIU
-        case 0x4: write_reg(c.rd, x_[c.rs1] ^ c.imm); break;           // XORI
-        case 0x6: write_reg(c.rd, x_[c.rs1] | c.imm); break;           // ORI
-        case 0x7: write_reg(c.rd, x_[c.rs1] & c.imm); break;           // ANDI
-        case 0x1: write_reg(c.rd, x_[c.rs1] << (c.imm & 0x1F)); break; // SLLI
+        case 0x0: write_reg(c.rd, regs_[c.rs1] + c.imm); break;           // ADDI
+        case 0x2: write_reg(c.rd, (int32_t)regs_[c.rs1] < c.imm); break;   // SLTI
+        case 0x3: write_reg(c.rd, regs_[c.rs1] < (uint32_t)c.imm); break; // SLTIU
+        case 0x4: write_reg(c.rd, regs_[c.rs1] ^ c.imm); break;           // XORI
+        case 0x6: write_reg(c.rd, regs_[c.rs1] | c.imm); break;           // ORI
+        case 0x7: write_reg(c.rd, regs_[c.rs1] & c.imm); break;           // ANDI
+        case 0x1: write_reg(c.rd, regs_[c.rs1] << (c.imm & 0x1F)); break; // SLLI
         case 0x5:
-            if ((c.funct7 & 0x20) == 0) write_reg(c.rd, x_[c.rs1] >> (c.imm & 0x1F)); // SRLI
-            else write_reg(c.rd, int32_t(x_[c.rs1]) >> (c.imm & 0x1F));                // SRAI
+            if ((c.funct7 & 0x20) == 0) write_reg(c.rd, regs_[c.rs1] >> (c.imm & 0x1F)); // SRLI
+            else write_reg(c.rd, int32_t(regs_[c.rs1]) >> (c.imm & 0x1F));                // SRAI
             break;
     }
     pc_ += 4;
 }
 
 void Processor::exec_store(Command& c) {
-    uint32_t addr = x_[c.rs1] + c.imm;
+    uint32_t addr = regs_[c.rs1] + c.imm;
     switch (c.funct3) {
-        case 0x0: write_mem(addr, x_[c.rs2], 1); break; // SB
-        case 0x1: write_mem(addr, x_[c.rs2], 2); break; // SH
-        case 0x2: write_mem(addr, x_[c.rs2], 4); break; // SW
+        case 0x0: write_mem(addr, regs_[c.rs2], 1); break; // SB
+        case 0x1: write_mem(addr, regs_[c.rs2], 2); break; // SH
+        case 0x2: write_mem(addr, regs_[c.rs2], 4); break; // SW
     }
     pc_ += 4;
 }
@@ -80,12 +80,12 @@ void Processor::exec_store(Command& c) {
 void Processor::exec_branch(Command& c) {
     bool take = false;
     switch (c.funct3) {
-        case 0x0: take = x_[c.rs1] == x_[c.rs2]; break; // BEQ
-        case 0x1: take = x_[c.rs1] != x_[c.rs2]; break; // BNE
-        case 0x4: take = int32_t(x_[c.rs1]) < int32_t(x_[c.rs2]); break; // BLT
-        case 0x5: take = int32_t(x_[c.rs1]) >= int32_t(x_[c.rs2]); break; // BGE
-        case 0x6: take = x_[c.rs1] < x_[c.rs2]; break; // BLTU
-        case 0x7: take = x_[c.rs1] >= x_[c.rs2]; break; // BGEU
+        case 0x0: take = regs_[c.rs1] == regs_[c.rs2]; break; // BEQ
+        case 0x1: take = regs_[c.rs1] != regs_[c.rs2]; break; // BNE
+        case 0x4: take = int32_t(regs_[c.rs1]) < int32_t(regs_[c.rs2]); break; // BLT
+        case 0x5: take = int32_t(regs_[c.rs1]) >= int32_t(regs_[c.rs2]); break; // BGE
+        case 0x6: take = regs_[c.rs1] < regs_[c.rs2]; break; // BLTU
+        case 0x7: take = regs_[c.rs1] >= regs_[c.rs2]; break; // BGEU
     }
     pc_ += take ? c.imm : 4;
 }
@@ -114,6 +114,6 @@ void Processor::exec_jal(Command& c) {
 
 void Processor::exec_jalr(Command& c) { 
     uint32_t tmp = pc_ + 4; 
-    pc_ = (x_[c.rs1] + c.imm) & ~1; 
+    pc_ = (regs_[c.rs1] + c.imm) & ~1; 
     write_reg(c.rd, tmp); 
 }

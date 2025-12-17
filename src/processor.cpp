@@ -1,11 +1,11 @@
 #include "processor.hpp"
 
-Processor::Processor(CacheAbstract& cache, const std::vector<uint32_t>& regs) : cache_(cache), x_(regs), pc_(x_[0]), running_(true) {
+Processor::Processor(CacheAbstract& cache, const std::vector<uint32_t>& regs) : cache_(cache), regs_(regs), pc_(regs_[0]), running_(true) {
     pc_ = 0;
 }
 
 void Processor::run() {
-    uint32_t start_ra = x_[1];
+    uint32_t start_ra = regs_[1];
     while (running_) {
         uint32_t instr = cache_.read32(pc_, AccessType::Instruction);
 
@@ -69,7 +69,7 @@ void Processor::write_mem(uint32_t addr, uint32_t value, uint32_t size) {
 uint32_t Processor::get_reg(int i) const {
     if (i < 0 || i >= 32)
         std::out_of_range("Invalid register index");
-    return x_[i];
+    return regs_[i];
 }
 
 Command Processor::parse(uint32_t raw_instr) {
@@ -124,8 +124,8 @@ void Processor::validate_opcode(const Command& c) {
 }
 
 void Processor::write_reg(uint8_t rd, uint32_t value) {
-    x_[rd] = value;
-    x_[0] = 0;
+    regs_[rd] = value;
+    regs_[0] = 0;
 }
 
 std::function<void(Command&, Processor&)> Processor::get_function(const Command& cmd) {

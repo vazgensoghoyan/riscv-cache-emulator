@@ -51,7 +51,7 @@ private:
 
 private:
     CacheAbstract& cache_;
-    std::vector<uint32_t> x_;
+    std::vector<uint32_t> regs_;
     uint32_t pc_;
     bool running_;
 
