@@ -16,6 +16,8 @@ include_directories(${PROJECT_SOURCE_DIR}/include)
 
 file(GLOB_RECURSE SOURCES "${PROJECT_SOURCE_DIR}/src/*.cpp")
 
+list(APPEND SOURCES "${PROJECT_SOURCE_DIR}/main.cpp")
+
 add_executable(riscv_emulator ${SOURCES})
 
 set_target_properties(riscv_emulator PROPERTIES

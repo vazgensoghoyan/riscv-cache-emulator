@@ -25,21 +25,29 @@ InputData read_input_file(const std::string& filename) {
     if (!in) throw std::runtime_error("Cannot open input file");
 
     input.registers.resize(32);
-    in.read(reinterpret_cast<char*>(input.registers.data()), sizeof(input.registers));
-    if (!in) throw std::runtime_error("Cannot read registers");
+    if (!in.read(reinterpret_cast<char*>(input.registers.data()), 32 * sizeof(uint32_t))) {
+        throw std::runtime_error("Cannot read registers from input file");
+    }
 
     while (true) {
-        uint32_t addr, size;
-        in.read(reinterpret_cast<char*>(&addr), sizeof(addr));
-        if (!in) break; // EOF
-        in.read(reinterpret_cast<char*>(&size), sizeof(size));
-        if (!in) throw std::runtime_error("Corrupted memory fragment header");
+        uint32_t addr = 0;
+        uint32_t size = 0;
 
-        std::vector<uint8_t> data(size);
-        in.read(reinterpret_cast<char*>(data.data()), size);
-        if (!in) throw std::runtime_error("Corrupted memory fragment data");
+        if (!in.read(reinterpret_cast<char*>(&addr), sizeof(addr))) {
+            break;
+        }
 
-        input.memory[addr] = std::move(data);
+        if (!in.read(reinterpret_cast<char*>(&size), sizeof(size))) {
+            throw std::runtime_error("Corrupted memory fragment header (size missing)");
+        }
+
+        if (size > 0) {
+            std::vector<uint8_t> data(size);
+            if (!in.read(reinterpret_cast<char*>(data.data()), size)) {
+                throw std::runtime_error("Corrupted memory fragment data");
+            }
+            input.memory[addr] = std::move(data);
+        }
     }
 
     return input;
