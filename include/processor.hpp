@@ -4,6 +4,7 @@
 #include <functional>
 #include <stdexcept>
 #include <vector>
+#include <string>
 
 #include "cache_abstract.hpp"
 

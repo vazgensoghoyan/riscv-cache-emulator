@@ -71,7 +71,7 @@ void Processor::write_mem(uint32_t addr, uint32_t value, uint32_t size) {
 
 uint32_t Processor::get_reg(int i) const {
     if (i < 0 || i >= 32)
-        std::out_of_range("Invalid register index");
+        throw std::out_of_range("Invalid register index");
     return regs_[i];
 }
 
