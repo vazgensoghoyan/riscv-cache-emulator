@@ -6,6 +6,7 @@
 #include <map>
 #include <string>
 #include <stdexcept>
+#include <cmath>
 
 #include "processor.hpp"
 #include "cache_lru.hpp"
@@ -57,28 +58,21 @@ void print_stats(const char* name, const CacheStats& s) {
     uint64_t total_access = s.instr_access + s.data_access;
     uint64_t total_hit = s.instr_hit + s.data_hit;
 
-    if (total_access == 0) {
-        std::printf(
-            "| %-11s | %3s |       %3s |      %3s | %12d | %12d | %12d | %12d |\n",
-            name, "nan%", "nan%", "nan%", 0, 0, 0, 0
-        );
-        return;
-    }
+    double hit_rate = total_access ? 100.0 * total_hit / total_access : std::nan("");
 
-    double hit_rate = 100.0 * total_hit / total_access;
-    double instr_hit_rate = s.instr_access ? 100.0 * s.instr_hit / s.instr_access : 0.0;
-    double data_hit_rate = s.data_access ? 100.0 * s.data_hit / s.data_access  : 0.0;
+    double instr_hit_rate = s.instr_access ? 100.0 * s.instr_hit / s.instr_access : std::nan("");
+    double data_hit_rate = s.data_access ? 100.0 * s.data_hit / s.data_access  : std::nan("");
 
     std::printf(
-        "| %-11s | %3.4f%% |       %3.4f%% |      %3.4f%% | %12llu | %12llu | %12llu | %12llu |\n",
+        "| %-11s | %3.4f%% |       %3.4f%% |      %3.4f%% | %12d | %12d | %12d | %12d |\n",
         name,
         hit_rate,
         instr_hit_rate,
         data_hit_rate,
-        (unsigned long long)s.instr_access,
-        (unsigned long long)s.instr_hit,
-        (unsigned long long)s.data_access,
-        (unsigned long long)s.data_hit
+        (int)s.instr_access,
+        (int)s.instr_hit,
+        (int)s.data_access,
+        (int)s.data_hit
     );
 }
 
@@ -152,7 +146,6 @@ int main(int argc, char* argv[]) {
         CacheLRU cache_lru(ram_lru);
         Processor cpu_lru(cache_lru, input.registers);
         cpu_lru.run();
-        print_stats("LRU", cache_lru.stats());
 
         RAM ram_bplru(MEMORY_SIZE);
         load_memory(ram_bplru, input.memory);
@@ -160,6 +153,11 @@ int main(int argc, char* argv[]) {
         CacheBpLRU cache_bplru(ram_bplru);
         Processor cpu_bplru(cache_bplru, input.registers);
         cpu_bplru.run();
+
+        std::printf("| replacement | hit_rate | instr_hit_rate | data_hit_rate | instr_access |  instr_hit   | data_access  |   data_hit   |\n");
+        std::printf("| :---------- | :------: | -------------: | ------------: | -----------: | -----------: | -----------: | -----------: |\n");
+
+        print_stats("LRU", cache_lru.stats());
         print_stats("bpLRU", cache_bplru.stats());
 
         if (has_output)
